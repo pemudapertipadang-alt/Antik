@@ -16,7 +16,7 @@ function MemberQr({ value, size = 92 }) {
     </div>
   );
 }
-function _unusedQrGrid() { return null; }
+
 
 export default function Jemput() {
   const [data, setData] = useState(null);

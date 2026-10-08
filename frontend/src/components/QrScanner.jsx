@@ -68,6 +68,11 @@ export default function QrScanner({ onResult, onClose }) {
             <p style={{ margin: 0, textAlign: "center", fontSize: 13, color: "#B9C7BF", lineHeight: 1.5 }}>
               Arahkan kamera ke QR anggota di layar aplikasi warga. Kode akan terbaca otomatis.
             </p>
+            <button data-testid="qr-scanner-manual-normal" onClick={onClose}
+              style={{ height: 46, padding: "0 18px", borderRadius: 14, border: "1px solid #3A4A42",
+                background: "transparent", color: "#DCE2D8", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+              Masukkan kode manual
+            </button>
           </>
         ) : (
           <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
