@@ -84,9 +84,11 @@ class RegisterIn(BaseModel):
     name: str
     phone: str
     pin: str
-    rt: Optional[str] = "03"
-    rw: Optional[str] = "05"
-    kelurahan: Optional[str] = "Kelurahan Harapan"
+    kabupaten: str
+    kecamatan: str
+    kelurahan: str
+    rt: str
+    rw: str
 
 class LoginIn(BaseModel):
     phone: str
@@ -122,6 +124,35 @@ RATE_LABEL = {
 }
 TYPE_COLOR = {"organik": "#1F5C3F", "anorganik": "#1E4F8A", "ecobrick": "#B45309", "residu": "#5B6560"}
 
+# ---------------------------------------------------------------- regions (Sumatera Barat)
+import json as _json
+with open(ROOT_DIR / "data" / "sumbar.json", encoding="utf-8") as _f:
+    REGIONS = _json.load(_f)
+_KAB_BY_ID = {r["id"]: r for r in REGIONS}
+_KEC_BY_ID = {}
+for _r in REGIONS:
+    for _d in _r["districts"]:
+        _KEC_BY_ID[_d["id"]] = _d
+
+@api.get("/regions/kabupaten")
+async def regions_kabupaten():
+    return {"items": [{"id": r["id"], "name": r["name"]} for r in REGIONS]}
+
+@api.get("/regions/kecamatan/{kab_id}")
+async def regions_kecamatan(kab_id: str):
+    r = _KAB_BY_ID.get(kab_id)
+    if not r:
+        raise HTTPException(status_code=404, detail="Kabupaten/Kota tidak ditemukan")
+    return {"items": [{"id": d["id"], "name": d["name"]} for d in r["districts"]]}
+
+@api.get("/regions/kelurahan/{kec_id}")
+async def regions_kelurahan(kec_id: str):
+    d = _KEC_BY_ID.get(kec_id)
+    if not d:
+        raise HTTPException(status_code=404, detail="Kecamatan tidak ditemukan")
+    return {"items": [{"id": v["id"], "name": v["name"]} for v in d["villages"]]}
+
+
 # ================================================================ AUTH
 @api.post("/auth/register")
 async def register(body: RegisterIn):
@@ -131,13 +162,14 @@ async def register(body: RegisterIn):
     if len(body.pin) < 4:
         raise HTTPException(status_code=400, detail="PIN minimal 4 digit")
     count = await db.users.count_documents({"role": "warga"}) + 1
-    member_code = f"PLH-{body.rw}{body.rt}-{count:04d}"
+    member_code = f"ATK-{body.rw}{body.rt}-{count:04d}"
     user = {
         "id": str(uuid.uuid4()),
         "name": body.name.strip(),
         "phone": phone,
         "pin_hash": hash_pin(body.pin),
         "role": "warga",
+        "kabupaten": body.kabupaten, "kecamatan": body.kecamatan,
         "rt": body.rt, "rw": body.rw, "kelurahan": body.kelurahan,
         "member_code": member_code,
         "points": 0,
@@ -441,6 +473,7 @@ async def seed():
         warga = {
             "id": str(uuid.uuid4()), "name": "Bu Ratna", "phone": wp,
             "pin_hash": hash_pin(os.environ["SEED_WARGA_PIN"]), "role": "warga",
+            "kabupaten": "Kota Padang", "kecamatan": "Padang Barat",
             "rt": "03", "rw": "05", "kelurahan": "Kelurahan Harapan",
             "member_code": "PLH-0503-0127", "points": 1240, "created_at": now_iso(),
         }

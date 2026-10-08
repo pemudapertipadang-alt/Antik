@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Leaf, Package, Trash2, MessageCircle, ArrowLeft } from "lucide-react";
+import { Leaf, Package, Trash2, MessageCircle, ArrowLeft, ChevronDown } from "lucide-react";
 import api, { apiErr } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { C, Logo, PhoneShell } from "@/components/ui-kit";
@@ -22,6 +22,32 @@ function Field({ label, ...props }) {
   );
 }
 
+function Select({ label, value, onChange, options, placeholder, disabled, testid }) {
+  return (
+    <label style={{ display: "flex", flexDirection: "column", gap: 6, opacity: disabled ? 0.5 : 1 }}>
+      <span style={{ fontSize: 13, fontWeight: 600, color: C.muted }}>{label}</span>
+      <div style={{ position: "relative" }}>
+        <select
+          data-testid={testid} value={value} disabled={disabled}
+          onChange={(e) => onChange(e.target.value)}
+          style={{
+            width: "100%", height: 52, borderRadius: 14, border: `1px solid ${C.line}`,
+            background: "#fff", padding: "0 40px 0 14px", fontSize: 15, color: value ? C.ink : "#9AA39C",
+            fontFamily: "inherit", outline: "none", appearance: "none", WebkitAppearance: "none",
+            cursor: disabled ? "not-allowed" : "pointer",
+          }}
+        >
+          <option value="">{placeholder}</option>
+          {options.map((o) => (
+            <option key={o.id} value={o.id}>{o.name}</option>
+          ))}
+        </select>
+        <ChevronDown size={18} color={C.muted} style={{ position: "absolute", right: 14, top: 17, pointerEvents: "none" }} />
+      </div>
+    </label>
+  );
+}
+
 export default function Login() {
   const nav = useNavigate();
   const { login } = useAuth();
@@ -29,9 +55,34 @@ export default function Login() {
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
   const [name, setName] = useState("");
-  const [rt, setRt] = useState("03");
-  const [rw, setRw] = useState("05");
+  const [rt, setRt] = useState("");
+  const [rw, setRw] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // cascading location (Sumatera Barat)
+  const [kabList, setKabList] = useState([]);
+  const [kecList, setKecList] = useState([]);
+  const [kelList, setKelList] = useState([]);
+  const [kab, setKab] = useState("");   // {id,name}
+  const [kec, setKec] = useState("");
+  const [kel, setKel] = useState("");
+
+  useEffect(() => {
+    if (mode === "register" && kabList.length === 0) {
+      api.get("/regions/kabupaten").then((r) => setKabList(r.data.items)).catch(() => {});
+    }
+  }, [mode, kabList.length]);
+
+  const onKab = (id) => {
+    setKab(id); setKec(""); setKel(""); setKecList([]); setKelList([]);
+    if (id) api.get(`/regions/kecamatan/${id}`).then((r) => setKecList(r.data.items)).catch(() => {});
+  };
+  const onKec = (id) => {
+    setKec(id); setKel(""); setKelList([]);
+    if (id) api.get(`/regions/kelurahan/${id}`).then((r) => setKelList(r.data.items)).catch(() => {});
+  };
+
+  const nameOf = (list, id) => list.find((x) => x.id === id)?.name || "";
 
   const submit = async () => {
     if (!phone || !pin) return toast.error("Isi nomor HP dan PIN");
@@ -39,7 +90,15 @@ export default function Login() {
     try {
       if (mode === "register") {
         if (!name) { setLoading(false); return toast.error("Isi nama lengkap"); }
-        const { data } = await api.post("/auth/register", { name, phone, pin, rt, rw });
+        if (!kab || !kec || !kel) { setLoading(false); return toast.error("Lengkapi Kabupaten/Kota, Kecamatan, dan Kelurahan"); }
+        if (!rt || !rw) { setLoading(false); return toast.error("Isi RT dan RW"); }
+        const { data } = await api.post("/auth/register", {
+          name, phone, pin,
+          kabupaten: nameOf(kabList, kab),
+          kecamatan: nameOf(kecList, kec),
+          kelurahan: nameOf(kelList, kel),
+          rt, rw,
+        });
         login(data.token, data.user);
         toast.success("Akun berhasil dibuat");
         nav("/beranda");
@@ -103,9 +162,18 @@ export default function Login() {
             <>
               <Field label="Nama lengkap" value={name} data-testid="reg-name-input"
                 onChange={(e) => setName(e.target.value)} placeholder="Bu Ratna" />
+              <Select label="Kabupaten / Kota" testid="reg-kabupaten-select"
+                value={kab} onChange={onKab} options={kabList}
+                placeholder="Pilih kabupaten/kota (Sumatera Barat)" />
+              <Select label="Kecamatan" testid="reg-kecamatan-select"
+                value={kec} onChange={onKec} options={kecList} disabled={!kab}
+                placeholder={kab ? "Pilih kecamatan" : "Pilih kabupaten/kota dulu"} />
+              <Select label="Kelurahan / Nagari" testid="reg-kelurahan-select"
+                value={kel} onChange={setKel} options={kelList} disabled={!kec}
+                placeholder={kec ? "Pilih kelurahan/nagari" : "Pilih kecamatan dulu"} />
               <div style={{ display: "flex", gap: 10 }}>
-                <div style={{ flex: 1 }}><Field label="RT" value={rt} data-testid="reg-rt-input" onChange={(e) => setRt(e.target.value)} /></div>
-                <div style={{ flex: 1 }}><Field label="RW" value={rw} data-testid="reg-rw-input" onChange={(e) => setRw(e.target.value)} /></div>
+                <div style={{ flex: 1 }}><Field label="RT" value={rt} data-testid="reg-rt-input" inputMode="numeric" placeholder="03" onChange={(e) => setRt(e.target.value)} /></div>
+                <div style={{ flex: 1 }}><Field label="RW" value={rw} data-testid="reg-rw-input" inputMode="numeric" placeholder="05" onChange={(e) => setRw(e.target.value)} /></div>
               </div>
             </>
           )}
