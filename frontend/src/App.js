@@ -11,7 +11,7 @@ import Petugas from "@/pages/Petugas";
 function Splash() {
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
-      background: "#F3F5EF", color: "#1F5C3F", fontWeight: 800, fontSize: 18 }}>PilahIn…</div>
+      background: "#F3F5EF", color: "#1F5C3F", fontWeight: 800, fontSize: 18 }}>ANTIK…</div>
   );
 }
 

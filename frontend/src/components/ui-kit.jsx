@@ -1,5 +1,3 @@
-import { Leaf } from "lucide-react";
-
 export const C = {
   bg: "#F3F5EF",
   ink: "#17251E",
@@ -16,7 +14,26 @@ export const C = {
   dark: "#17251E",
 };
 
-export function Logo({ size = 22, box = 40, radius = 12 }) {
+// ANTIK mark: a circular-economy recycling loop (two arcs + arrowheads)
+// wrapping a savings coin with a slot — "menabung sampah jadi nilai".
+export function AntikMark({ size = 24, color = "#fff" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      {/* circular economy loop */}
+      <path d="M10 20A15 15 0 0 1 34 11.5" stroke={color} strokeWidth="3.4" strokeLinecap="round" />
+      <path d="M38 28A15 15 0 0 1 14 36.5" stroke={color} strokeWidth="3.4" strokeLinecap="round" />
+      {/* arrowheads */}
+      <path d="M30 8.5l4.5 3-3 4.5" stroke={color} strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M18 39.5l-4.5-3 3-4.5" stroke={color} strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
+      {/* savings coin */}
+      <circle cx="24" cy="24" r="7.3" fill={color} />
+      {/* coin slot (tabungan) */}
+      <rect x="20.3" y="22.8" width="7.4" height="2.4" rx="1.2" fill={C.green} />
+    </svg>
+  );
+}
+
+export function Logo({ box = 40, radius = 12, size = 26 }) {
   return (
     <div
       style={{
@@ -24,7 +41,7 @@ export function Logo({ size = 22, box = 40, radius = 12 }) {
         color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
       }}
     >
-      <Leaf size={size} strokeWidth={1.9} />
+      <AntikMark size={size} color="#fff" />
     </div>
   );
 }

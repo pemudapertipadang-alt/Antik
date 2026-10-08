@@ -66,8 +66,13 @@ export default function Login() {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <Logo />
-          <div className="font-display" style={{ fontWeight: 800, fontSize: 24, letterSpacing: "-0.5px" }}>
-            PilahIn
+          <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
+            <div className="font-display" style={{ fontWeight: 800, fontSize: 24, letterSpacing: "-0.5px" }}>
+              ANTIK
+            </div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: C.muted, marginTop: 3 }}>
+              Arisan Tabungan Organik &amp; An-Organik
+            </div>
           </div>
         </div>
 
