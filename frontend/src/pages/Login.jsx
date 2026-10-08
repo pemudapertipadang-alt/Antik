@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Leaf, Package, Trash2, MessageCircle, ArrowLeft, ChevronDown } from "lucide-react";
+import { Leaf, Package, Trash2, MessageCircle, ArrowLeft, ChevronDown, Search, X } from "lucide-react";
 import api, { apiErr } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { C, Logo, PhoneShell } from "@/components/ui-kit";
@@ -43,6 +43,85 @@ function Select({ label, value, onChange, options, placeholder, disabled, testid
           ))}
         </select>
         <ChevronDown size={18} color={C.muted} style={{ position: "absolute", right: 14, top: 17, pointerEvents: "none" }} />
+      </div>
+    </label>
+  );
+}
+
+function SearchSelect({ label, value, onChange, options, placeholder, disabled, testid }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const ref = useRef(null);
+  const selected = options.find((o) => o.id === value);
+
+  useEffect(() => {
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  useEffect(() => { if (!value) setQ(""); }, [value]);
+
+  const norm = (s) => s.toLowerCase();
+  const filtered = q ? options.filter((o) => norm(o.name).includes(norm(q))) : options;
+
+  return (
+    <label style={{ display: "flex", flexDirection: "column", gap: 6, opacity: disabled ? 0.5 : 1 }}>
+      <span style={{ fontSize: 13, fontWeight: 600, color: C.muted }}>{label}</span>
+      <div ref={ref} style={{ position: "relative" }}>
+        <button
+          type="button" data-testid={testid} disabled={disabled}
+          onClick={() => { if (!disabled) { setOpen((v) => !v); setQ(""); } }}
+          style={{
+            width: "100%", height: 52, borderRadius: 14, border: `1px solid ${open ? C.green : C.line}`,
+            background: "#fff", padding: "0 40px 0 14px", fontSize: 15, textAlign: "left",
+            color: selected ? C.ink : "#9AA39C", fontFamily: "inherit", outline: "none",
+            cursor: disabled ? "not-allowed" : "pointer", display: "flex", alignItems: "center",
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          }}
+        >
+          {selected ? selected.name : placeholder}
+        </button>
+        <ChevronDown size={18} color={C.muted} style={{ position: "absolute", right: 14, top: 17, pointerEvents: "none" }} />
+
+        {open && (
+          <div className="pi-fade" style={{
+            position: "absolute", top: 58, left: 0, right: 0, zIndex: 40,
+            background: "#fff", border: `1px solid ${C.line}`, borderRadius: 16,
+            boxShadow: "0 16px 40px rgba(23,37,30,0.18)", overflow: "hidden",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", borderBottom: `1px solid ${C.line}` }}>
+              <Search size={16} color={C.muted} />
+              <input
+                data-testid={`${testid}-search`} autoFocus value={q}
+                onChange={(e) => setQ(e.target.value)} placeholder="Ketik nama kelurahan/nagari…"
+                style={{ flex: 1, border: "none", outline: "none", fontSize: 14, fontFamily: "inherit", color: C.ink, background: "transparent" }}
+              />
+              {q && <button type="button" onClick={() => setQ("")} style={{ border: "none", background: "none", cursor: "pointer", color: C.muted, display: "flex" }}><X size={16} /></button>}
+            </div>
+            <div className="pi-scroll" style={{ maxHeight: 220, overflowY: "auto" }}>
+              {filtered.length === 0 && (
+                <div style={{ padding: "14px 14px", fontSize: 13, color: C.muted }}>Tidak ditemukan "{q}"</div>
+              )}
+              {filtered.slice(0, 200).map((o) => (
+                <button
+                  key={o.id} type="button" data-testid={`${testid}-opt-${o.id}`}
+                  onClick={() => { onChange(o.id); setOpen(false); }}
+                  style={{
+                    display: "block", width: "100%", textAlign: "left", padding: "11px 14px",
+                    border: "none", background: o.id === value ? C.greenSoft : "#fff",
+                    color: o.id === value ? C.green : C.ink, fontWeight: o.id === value ? 700 : 500,
+                    fontSize: 14, fontFamily: "inherit", cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => { if (o.id !== value) e.currentTarget.style.background = C.bg; }}
+                  onMouseLeave={(e) => { if (o.id !== value) e.currentTarget.style.background = "#fff"; }}
+                >
+                  {o.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </label>
   );
@@ -168,9 +247,9 @@ export default function Login() {
               <Select label="Kecamatan" testid="reg-kecamatan-select"
                 value={kec} onChange={onKec} options={kecList} disabled={!kab}
                 placeholder={kab ? "Pilih kecamatan" : "Pilih kabupaten/kota dulu"} />
-              <Select label="Kelurahan / Nagari" testid="reg-kelurahan-select"
+              <SearchSelect label="Kelurahan / Nagari" testid="reg-kelurahan-select"
                 value={kel} onChange={setKel} options={kelList} disabled={!kec}
-                placeholder={kec ? "Pilih kelurahan/nagari" : "Pilih kecamatan dulu"} />
+                placeholder={kec ? "Pilih / cari kelurahan/nagari" : "Pilih kecamatan dulu"} />
               <div style={{ display: "flex", gap: 10 }}>
                 <div style={{ flex: 1 }}><Field label="RT" value={rt} data-testid="reg-rt-input" inputMode="numeric" placeholder="03" onChange={(e) => setRt(e.target.value)} /></div>
                 <div style={{ flex: 1 }}><Field label="RW" value={rw} data-testid="reg-rw-input" inputMode="numeric" placeholder="05" onChange={(e) => setRw(e.target.value)} /></div>
