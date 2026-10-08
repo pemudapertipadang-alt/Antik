@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, QrCode } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import api, { apiErr } from "@/lib/api";
 import { C, PhoneShell } from "@/components/ui-kit";
 import BottomNav from "@/components/BottomNav";
@@ -7,38 +8,15 @@ import { toast } from "sonner";
 
 const dayNum = (iso) => Number(iso.slice(8, 10));
 
-// deterministic decorative QR grid from a string
-function QrGrid({ value, size = 92 }) {
-  const cells = 21;
-  const bits = useMemo(() => {
-    let h = 2166136261;
-    const out = [];
-    for (let i = 0; i < cells * cells; i++) {
-      h ^= value.charCodeAt(i % value.length) + i * 31;
-      h = Math.imul(h, 16777619);
-      out.push(((h >>> 7) & 1) === 1);
-    }
-    return out;
-  }, [value]);
-  const px = size / cells;
-  const finder = (r, c) => (r < 7 && c < 7) || (r < 7 && c >= cells - 7) || (r >= cells - 7 && c < 7);
+// real scannable QR encoding the member code
+function MemberQr({ value, size = 92 }) {
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ borderRadius: 8, background: "#fff" }}>
-      {bits.map((b, i) => {
-        const r = Math.floor(i / cells), c = i % cells;
-        if (finder(r, c)) return null;
-        return b ? <rect key={i} x={c * px} y={r * px} width={px} height={px} fill={C.ink} /> : null;
-      })}
-      {[[0, 0], [0, cells - 7], [cells - 7, 0]].map(([r, c], k) => (
-        <g key={k}>
-          <rect x={c * px} y={r * px} width={px * 7} height={px * 7} fill={C.green} />
-          <rect x={(c + 1) * px} y={(r + 1) * px} width={px * 5} height={px * 5} fill="#fff" />
-          <rect x={(c + 2) * px} y={(r + 2) * px} width={px * 3} height={px * 3} fill={C.green} />
-        </g>
-      ))}
-    </svg>
+    <div style={{ padding: 6, background: "#fff", borderRadius: 10, border: `1px solid ${C.line}` }}>
+      <QRCodeSVG value={value || "ATK"} size={size} level="M" fgColor={C.ink} bgColor="#ffffff" />
+    </div>
   );
 }
+function _unusedQrGrid() { return null; }
 
 export default function Jemput() {
   const [data, setData] = useState(null);
@@ -136,7 +114,7 @@ export default function Jemput() {
         {/* QR member */}
         <section style={{ background: "#fff", border: `1px solid ${C.line}`, borderRadius: 20, padding: 16,
           display: "flex", gap: 16, alignItems: "center" }}>
-          <div data-testid="member-qr"><QrGrid value={data?.member_code || "PLH"} /></div>
+          <div data-testid="member-qr"><MemberQr value={data?.member_code || "ATK"} /></div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: "0.6px",
               display: "flex", alignItems: "center", gap: 6 }}><QrCode size={14} /> QR anggota</div>

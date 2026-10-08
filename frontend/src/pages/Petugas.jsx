@@ -4,6 +4,7 @@ import { ScanLine, Check, LogOut, Search } from "lucide-react";
 import api, { apiErr } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { C, PhoneShell } from "@/components/ui-kit";
+import QrScanner from "@/components/QrScanner";
 import { toast } from "sonner";
 
 const ROWS = [
@@ -23,6 +24,7 @@ export default function Petugas() {
   const [clean, setClean] = useState(false);
   const [saved, setSaved] = useState(false);
   const [today, setToday] = useState({ count: 0, total_points: 0, transactions: [] });
+  const [scanning, setScanning] = useState(false);
 
   const loadToday = () => api.get("/petugas/today").then((r) => setToday(r.data)).catch(() => {});
   useEffect(() => { loadToday(); }, []);
@@ -37,6 +39,13 @@ export default function Petugas() {
       setClean(false);
       setSaved(false);
     } catch (e) { toast.error(apiErr(e)); setWarga(null); }
+  };
+
+  const onScanResult = (text) => {
+    setScanning(false);
+    setCode(text);
+    toast.success(`QR terbaca: ${text}`);
+    find(text);
   };
 
   const adj = (type, delta, step) => setVals((v) => ({ ...v, [type]: Math.max(0, Math.round((v[type] + delta * step) * 10) / 10) }));
@@ -75,6 +84,17 @@ export default function Petugas() {
         </div>
 
         {/* scan / lookup */}
+        <button data-testid="open-scanner-button" onClick={() => setScanning(true)}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, width: "100%",
+            height: 52, borderRadius: 16, border: "none", background: C.green, color: "#fff",
+            fontWeight: 800, fontSize: 15, cursor: "pointer" }}>
+          <ScanLine size={22} strokeWidth={2} /> Pindai QR warga
+        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ flex: 1, height: 1, background: "#2E3F37" }} />
+          <span style={{ fontSize: 12, color: "#8FA398", fontWeight: 600 }}>atau masukkan kode</span>
+          <span style={{ flex: 1, height: 1, background: "#2E3F37" }} />
+        </div>
         <div style={{ background: "#24362D", borderRadius: 16, padding: 10, display: "flex", gap: 8, alignItems: "center" }}>
           <ScanLine size={20} color="#B9C7BF" style={{ flexShrink: 0, marginLeft: 4 }} />
           <input data-testid="member-code-input" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())}
@@ -87,6 +107,8 @@ export default function Petugas() {
             <Search size={16} /> Cari</button>
         </div>
       </header>
+
+      {scanning && <QrScanner onResult={onScanResult} onClose={() => setScanning(false)} />}
 
       <main className="pi-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 20px",
         display: "flex", flexDirection: "column", gap: 10, background: C.bg }}>
