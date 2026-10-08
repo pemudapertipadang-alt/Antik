@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --pi-bg: #F3F5EF;
+  --pi-ink: #17251E;
+  --pi-muted: #4B5A52;
+  --pi-green: #1F5C3F;
+  --pi-green-strong: #146C43;
+  --pi-green-dark: #143D2A;
+  --pi-green-soft: #E3EFE6;
+  --pi-blue: #1E4F8A;
+  --pi-amber: #9A4A0B;
+  --pi-amber-2: #B45309;
+  --pi-line: #DCE2D8;
+  --pi-dark: #17251E;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  background: #E6E7E1;
+  color: var(--pi-ink);
+  font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-display {
+  font-family: 'Bricolage Grotesque', 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+/* hide scrollbars inside the mobile frame but keep scroll */
+.pi-scroll::-webkit-scrollbar { width: 0; height: 0; }
+.pi-scroll { scrollbar-width: none; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+@keyframes pi-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.pi-fade { animation: pi-fade-up 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+
+button { font-family: inherit; }
+a { color: var(--pi-green); }
