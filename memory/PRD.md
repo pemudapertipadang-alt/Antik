@@ -31,9 +31,15 @@
 - Seed: 2 accounts, 3 daily missions + 4 stages, 6 catalog items, 2-week pickup schedule, sample setoran history.
 - Verified: 24/24 backend pytest + full frontend E2E, 100% pass.
 
+## Implemented (2026-10-12) — Admin Panel (Pengelola)
+- Separate /admin login (phone+PIN, role "admin", seeded 081200000000/123456 via SEED_ADMIN_* env).
+- Desktop sidebar dashboard (responsive, mobile sheet): Ringkasan (stats + 14-day chart + top warga + recent setoran + upcoming jadwal), Warga (search/filter, edit, deactivate, point adjustment w/ reason log, reset PIN, CSV), Petugas (create/edit/deactivate/reset PIN), Katalog CRUD + show/hide, Jadwal CRUD + weekly repeat, Laporan Setoran (filters, totals, CSV), Penukaran (menunggu→diproses→selesai/ditolak; tolak refunds points + stock; CSV).
+- Warga redeem now creates "menunggu" + decrements stock; history shows status/refund/adjustments. Deactivated accounts blocked from login & weighing.
+- Verified: 36/36 admin pytest + frontend E2E (iteration_3).
+
 ## Backlog
 - P1: Real pulsa/payment integration for redemption (Stripe/Midtrans/pulsa provider) — pending user details.
-- P1: Pengelola/Admin desktop panel (ringkasan, warga & KK, jadwal & rute, batch & pengiriman, katalog, siaran WA, laporan).
+- P1: Siaran WA & batch pupuk/pengiriman modules in admin.
 - P2: Photo upload for "Foto pilahan" mission (object storage).
 - P2: WhatsApp reminders/receipts (Twilio) — currently simulated text.
 - P2: Login rate-limit/lockout; petugas RT/RW scoping; Beranda loading skeletons.
