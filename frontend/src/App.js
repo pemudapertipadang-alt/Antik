@@ -7,6 +7,17 @@ import Misi from "@/pages/Misi";
 import Jemput from "@/pages/Jemput";
 import TukarPoin from "@/pages/TukarPoin";
 import Petugas from "@/pages/Petugas";
+import AdminLogin from "@/pages/admin/AdminLogin";
+import AdminLayout from "@/pages/admin/AdminLayout";
+import Ringkasan from "@/pages/admin/Ringkasan";
+import AdminWarga from "@/pages/admin/Warga";
+import AdminPetugas from "@/pages/admin/Petugas";
+import Katalog from "@/pages/admin/Katalog";
+import Jadwal from "@/pages/admin/Jadwal";
+import Setoran from "@/pages/admin/Setoran";
+import Penukaran from "@/pages/admin/Penukaran";
+
+const homeFor = (role) => (role === "admin" ? "/admin" : role === "petugas" ? "/petugas" : "/beranda");
 
 function Splash() {
   return (
@@ -20,15 +31,22 @@ function Protected({ children, role }) {
   if (!ready || user === null) return <Splash />;
   if (!user) return <Navigate to="/" replace />;
   if (role && user.role !== role) {
-    return <Navigate to={user.role === "petugas" ? "/petugas" : "/beranda"} replace />;
+    return <Navigate to={homeFor(user.role)} replace />;
   }
   return children;
+}
+
+function AdminGate() {
+  const { user, ready } = useAuth();
+  if (!ready || user === null) return <Splash />;
+  if (!user || user.role !== "admin") return <AdminLogin />;
+  return <AdminLayout />;
 }
 
 function Landing() {
   const { user, ready } = useAuth();
   if (!ready || user === null) return <Splash />;
-  if (user) return <Navigate to={user.role === "petugas" ? "/petugas" : "/beranda"} replace />;
+  if (user) return <Navigate to={homeFor(user.role)} replace />;
   return <Login />;
 }
 
@@ -44,6 +62,15 @@ function App() {
           <Route path="/jemput" element={<Protected role="warga"><Jemput /></Protected>} />
           <Route path="/tukar" element={<Protected role="warga"><TukarPoin /></Protected>} />
           <Route path="/petugas" element={<Protected role="petugas"><Petugas /></Protected>} />
+          <Route path="/admin" element={<AdminGate />}>
+            <Route index element={<Ringkasan />} />
+            <Route path="warga" element={<AdminWarga />} />
+            <Route path="petugas" element={<AdminPetugas />} />
+            <Route path="katalog" element={<Katalog />} />
+            <Route path="jadwal" element={<Jadwal />} />
+            <Route path="setoran" element={<Setoran />} />
+            <Route path="penukaran" element={<Penukaran />} />
+          </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

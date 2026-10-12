@@ -17,6 +17,28 @@
   --pi-amber-2: #B45309;
   --pi-line: #DCE2D8;
   --pi-dark: #17251E;
+
+  /* shadcn tokens mapped to ANTIK palette (used by admin panel) */
+  --background: 0 0% 100%;
+  --foreground: 150 23% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 150 23% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 150 23% 12%;
+  --primary: 151 50% 24%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 135 29% 91%;
+  --secondary-foreground: 151 50% 16%;
+  --muted: 80 23% 95%;
+  --muted-foreground: 148 9% 32%;
+  --accent: 135 29% 91%;
+  --accent-foreground: 151 50% 16%;
+  --destructive: 0 72% 45%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 96 15% 87%;
+  --input: 96 15% 87%;
+  --ring: 151 50% 24%;
+  --radius: 0.875rem;
 }
 
 * { box-sizing: border-box; }

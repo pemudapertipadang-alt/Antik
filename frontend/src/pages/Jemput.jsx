@@ -132,7 +132,16 @@ export default function Jemput() {
               display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 700, fontSize: 14 }}>{h.detail}</div>
-                <div style={{ fontSize: 12, color: C.muted }}>{h.type === "setoran" ? "Setoran sampah" : "Tukar poin"} · {h.date.slice(0, 10)}</div>
+                <div style={{ fontSize: 12, color: C.muted }}>
+                  {h.type === "setoran" ? "Setoran sampah" : h.type === "refund" ? "Poin dikembalikan" : h.type === "penyesuaian" ? "Penyesuaian pengelola" : "Tukar poin"} · {h.date.slice(0, 10)}
+                  {h.status && (
+                    <span data-testid={`history-status-${i}`} style={{ marginLeft: 6, padding: "2px 8px", borderRadius: 999, fontWeight: 700, fontSize: 11,
+                      background: { menunggu: "#FBEEDC", diproses: "#E4ECF6", selesai: C.greenSoft, ditolak: "#FDE8E7" }[h.status] || C.greenSoft,
+                      color: { menunggu: C.amber, diproses: C.blue, selesai: C.green, ditolak: "#B42318" }[h.status] || C.green }}>
+                      {h.status}
+                    </span>
+                  )}
+                </div>
               </div>
               <div style={{ fontWeight: 800, fontSize: 15, color: h.points >= 0 ? C.green : C.amber }}>
                 {h.points >= 0 ? "+" : ""}{h.points}</div>

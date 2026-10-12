@@ -133,7 +133,7 @@ export default function TukarPoin() {
               <div style={{ display: "flex", gap: 10, alignItems: "flex-start", background: C.greenSoft, color: C.greenDark,
                 borderRadius: 12, padding: 12, fontSize: 13, lineHeight: 1.5, fontWeight: 600 }}>
                 <Check size={18} strokeWidth={2.2} style={{ flexShrink: 0, marginTop: 1 }} />
-                Berhasil ditukar: {pick.name}. {pick.how}.
+                Permintaan terkirim: {pick.name}. Pengelola akan memproses penukaranmu — {pick.how}. Pantau statusnya di Riwayat poin.
               </div>
               <button data-testid="redeem-close" onClick={close} style={{ height: 48, borderRadius: 14, border: `1px solid ${C.line}`,
                 background: "#fff", color: C.ink, fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Tutup</button>
