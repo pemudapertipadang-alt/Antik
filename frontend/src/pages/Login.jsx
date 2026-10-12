@@ -65,12 +65,14 @@ function SearchSelect({ label, value, onChange, options, placeholder, disabled, 
   const norm = (s) => s.toLowerCase();
   const filtered = q ? options.filter((o) => norm(o.name).includes(norm(q))) : options;
 
+  // NOTE: wrapper must NOT be a <label>: a label forwards clicks on its children to the
+  // first button (the trigger), which re-opened the dropdown right after picking an option.
   return (
-    <label style={{ display: "flex", flexDirection: "column", gap: 6, opacity: disabled ? 0.5 : 1 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, opacity: disabled ? 0.5 : 1 }}>
       <span style={{ fontSize: 13, fontWeight: 600, color: C.muted }}>{label}</span>
       <div ref={ref} style={{ position: "relative" }}>
         <button
-          type="button" data-testid={testid} disabled={disabled}
+          type="button" data-testid={testid} disabled={disabled} aria-haspopup="listbox" aria-expanded={open}
           onClick={() => { if (!disabled) { setOpen((v) => !v); setQ(""); } }}
           style={{
             width: "100%", height: 52, borderRadius: 14, border: `1px solid ${open ? C.green : C.line}`,
@@ -95,13 +97,17 @@ function SearchSelect({ label, value, onChange, options, placeholder, disabled, 
               <input
                 data-testid={`${testid}-search`} autoFocus value={q}
                 onChange={(e) => setQ(e.target.value)} placeholder="Ketik nama kelurahan/nagari…"
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") { e.preventDefault(); setOpen(false); }
+                  if (e.key === "Enter" && filtered[0]) { e.preventDefault(); onChange(filtered[0].id); setOpen(false); }
+                }}
                 style={{ flex: 1, border: "none", outline: "none", fontSize: 14, fontFamily: "inherit", color: C.ink, background: "transparent" }}
               />
               {q && <button type="button" onClick={() => setQ("")} style={{ border: "none", background: "none", cursor: "pointer", color: C.muted, display: "flex" }}><X size={16} /></button>}
             </div>
             <div className="pi-scroll" style={{ maxHeight: 220, overflowY: "auto" }}>
               {filtered.length === 0 && (
-                <div style={{ padding: "14px 14px", fontSize: 13, color: C.muted }}>Tidak ditemukan "{q}"</div>
+                <div style={{ padding: "14px 14px", fontSize: 13, color: C.muted }}>Tidak ditemukan “{q}”</div>
               )}
               {filtered.slice(0, 200).map((o) => (
                 <button
@@ -123,7 +129,7 @@ function SearchSelect({ label, value, onChange, options, placeholder, disabled, 
           </div>
         )}
       </div>
-    </label>
+    </div>
   );
 }
 
