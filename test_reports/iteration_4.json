@@ -1,0 +1,33 @@
+{
+  "summary": "Frontend-only testing of Kelurahan/Nagari search-select bug fix and warga registration flow on both desktop (1920x1080) and mobile (390x844). The main reported bug (dropdown re-opening after selecting an option because wrapper was a <label>) is FIXED — SearchSelect now uses a <div> wrapper and selection closes the dropdown properly. All related interactions verified: open/close via click, type-and-click, Enter selects first filtered, Escape closes, outside click closes, changing Kecamatan resets Kelurahan, re-opening & changing selection without typing. E2E registration completed successfully on mobile (phone 081366915150, PIN 123456, RT 01, RW 02, nagari Batu Taba) — redirected to /beranda and header shows 'RT 01 / RW 02 · Batu Taba' confirming kelurahan persisted. Regression: warga login (081200000002) → /beranda OK; petugas login (081200000001) → /petugas OK. One remaining layout bug: RW input overflows the form container on BOTH desktop and mobile.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Login.jsx register form — RT/RW row (lines ~259-262)",
+        "issue": "RW input overflows to the right of the form container on BOTH desktop and mobile. Measured on mobile (viewport 390): formRight=390, rwRight=498 → 108px overflow (RW visually cut off beyond viewport). On desktop (form width 420px): rwRight=1224 vs formRight=1170 → 54px overflow. Root cause: the native <input> elements inside Field have no width:100% and default min-content width (~200px from the browser's default `size` attribute) is wider than the flex:1 share, and flex items use `min-width:auto` which lets them exceed the parent. Fix: add `width:100%` + `box-sizing:border-box` to the input in Field (or `min-width:0` on the two flex:1 wrappers in the RT/RW row).",
+        "selector": "[data-testid=\"reg-rw-input\"]",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Fix RT/RW layout overflow in Login.jsx register form. Simplest fix: in the Field component (lines 9-23), add `width: '100%', boxSizing: 'border-box'` to the <input> style. Alternatively, add `minWidth: 0` to the two `<div style={{ flex: 1 }}>` wrappers at lines 260-261."
+  ],
+  "critical_code_review_comments": [
+    "SearchSelect fix is good — comment on lines 68-69 clearly documents why wrapper is a <div> not <label>. Consider extracting SearchSelect/Select/Field into their own files; Login.jsx is 333 lines but still manageable.",
+    "The Field component's input has no explicit width:100%; it relies on flex column stretch which fails on narrow flex-row parents (causes the RW overflow). Add width:100% + box-sizing:border-box for safety.",
+    "Phone/PIN inputs accept any format; no server-side-mirrored validation of phone length or PIN min 4 digits on the client despite the placeholder saying 'min. 4 digit'. Low priority."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "95% (10/11 checks passed; only RT/RW layout overflow failed)"},
+  "test_credentials": "Warga 081200000002/123456, Petugas 081200000001/123456 (used from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Created one new warga via registration: phone 081366915150, PIN 123456, kelurahan 'Batu Taba' (Kec. Ampek Angkek, Kab. Agam), RT 01/RW 02. Also created phone 0813xxxxx during desktop test attempt (failed before submit due to layout assertion, so no DB entry).",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Nagari search-select bug is confirmed fixed. Only remaining issue is RT/RW layout overflow (both viewports). After the main agent fixes the Field input width, re-verify by checking rwRight <= formRight on both 1920x1080 and 390x844. All other register-flow interactions already pass.",
+  "rca of the issue": "RW overflow RCA: inputs inside Field have no width:100%. The two flex:1 wrappers around RT/RW compute their width share correctly, but the inner <label> (flex column) contains an <input> with intrinsic browser-default min-width (~size=20 chars ≈ 200px + padding). Combined with default `min-width: auto` on flex items, this allows the second column to push past the parent's right edge. Fix: `width:100%; box-sizing:border-box` on input, OR `minWidth:0` on the flex:1 wrappers."
+}

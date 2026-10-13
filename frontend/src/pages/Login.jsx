@@ -13,6 +13,7 @@ function Field({ label, ...props }) {
       <input
         {...props}
         style={{
+          width: "100%", minWidth: 0, boxSizing: "border-box",
           height: 52, borderRadius: 14, border: `1px solid ${C.line}`,
           background: "#fff", padding: "0 14px", fontSize: 16, color: C.ink,
           fontFamily: "inherit", outline: "none",
