@@ -4,6 +4,7 @@ import { Users, Scale, Coins, Ticket, ArrowRight, CalendarDays, Trophy, Loader2 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
 import { toast } from "sonner";
 import api, { apiErr } from "@/lib/api";
+import { rp } from "@/components/ui-kit";
 import { Badge, Card, PageHeader, StatCard, fmtDate, kg, nf } from "./shared";
 
 export default function Ringkasan() {
@@ -27,7 +28,7 @@ export default function Ringkasan() {
         <StatCard testid="stat-sampah" label="Sampah terkumpul" value={kg(m.total_kg)} icon={Scale} tone="blue"
           sub={`${nf(m.setoran)} setoran · ${nf(m.ecobrick)} ecobrick bulan ini`} />
         <StatCard testid="stat-poin" label="Poin beredar" value={nf(d.points_outstanding)} icon={Coins} tone="amber"
-          sub={`${nf(m.points_issued)} poin diberikan bulan ini`} />
+          sub={`senilai ${rp(d.points_outstanding)} · ${nf(m.points_issued)} poin (${rp(m.points_issued)}) diberikan bulan ini`} />
         <Link to="/admin/penukaran" className="block">
           <StatCard testid="stat-penukaran" label="Penukaran perlu diproses" value={nf(d.redemptions_pending)} icon={Ticket} tone="dark"
             sub={`${nf(d.redemptions_month)} penukaran bulan ini →`} />

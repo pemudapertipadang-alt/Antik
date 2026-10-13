@@ -123,13 +123,23 @@ class WeighIn(BaseModel):
     clean_bonus: bool = False
 
 # ---------------------------------------------------------------- economics
-RATES = {"organik": 10, "anorganik": 15, "residu": 0, "ecobrick": 20}
-RATE_LABEL = {
-    "organik": "10 poin / kg",
-    "anorganik": "15 poin / kg",
-    "residu": "0 poin / kg",
-    "ecobrick": "20 poin / botol",
-}
+# 1 poin = Rp1. Rates are editable by pengelola (settings collection, id="rates").
+POINT_RUPIAH = 1
+DEFAULT_RATES = {"organik": 500, "anorganik": 1500, "residu": 0, "ecobrick": 1000}
+DEFAULT_CLEAN_BONUS_PCT = 10
+RATE_UNIT = {"organik": "kg", "anorganik": "kg", "residu": "kg", "ecobrick": "botol"}
+
+def _rp(n) -> str:
+    return "Rp" + f"{int(round(n)):,}".replace(",", ".")
+
+async def get_rate_settings() -> dict:
+    doc = await db.settings.find_one({"id": "rates"}) or {}
+    rates = {k: int(doc.get("rates", {}).get(k, v)) for k, v in DEFAULT_RATES.items()}
+    return {"rates": rates, "clean_bonus_pct": int(doc.get("clean_bonus_pct", DEFAULT_CLEAN_BONUS_PCT))}
+
+def rate_labels(rates: dict) -> dict:
+    return {k: f"{v:,} poin / {RATE_UNIT[k]}".replace(",", ".") for k, v in rates.items()}
+
 TYPE_COLOR = {"organik": "#1F5C3F", "anorganik": "#1E4F8A", "ecobrick": "#B45309", "residu": "#5B6560"}
 
 # ---------------------------------------------------------------- regions (Sumatera Barat)
@@ -421,7 +431,9 @@ async def petugas_find(member_code: str, petugas: dict = Depends(require_petugas
 
 @api.get("/petugas/rates")
 async def petugas_rates(petugas: dict = Depends(require_petugas)):
-    return {"rates": RATES, "labels": RATE_LABEL, "colors": TYPE_COLOR}
+    st = await get_rate_settings()
+    return {"rates": st["rates"], "labels": rate_labels(st["rates"]), "colors": TYPE_COLOR,
+            "clean_bonus_pct": st["clean_bonus_pct"], "point_rupiah": POINT_RUPIAH}
 
 @api.post("/petugas/weigh")
 async def petugas_weigh(body: WeighIn, petugas: dict = Depends(require_petugas)):
@@ -430,12 +442,14 @@ async def petugas_weigh(body: WeighIn, petugas: dict = Depends(require_petugas))
         raise HTTPException(status_code=404, detail="Warga tidak ditemukan")
     if w.get("active") is False:
         raise HTTPException(status_code=400, detail="Akun warga ini dinonaktifkan")
+    st = await get_rate_settings()
+    rates = st["rates"]
     items = []
     base_points = 0
     kg_total = 0.0
     eco_total = 0
     for it in body.items:
-        rate = RATES.get(it.type, 0)
+        rate = rates.get(it.type, 0)
         pts = int(round(it.value * rate))
         base_points += pts
         if it.type == "ecobrick":
@@ -443,7 +457,7 @@ async def petugas_weigh(body: WeighIn, petugas: dict = Depends(require_petugas))
         else:
             kg_total += it.value
         items.append({"type": it.type, "value": it.value, "unit": it.unit, "points": pts})
-    bonus = int(round(base_points * 0.10)) if body.clean_bonus else 0
+    bonus = int(round(base_points * st["clean_bonus_pct"] / 100)) if body.clean_bonus else 0
     total = base_points + bonus
     summary = f"{round(kg_total,1)} kg + {eco_total} ecobrick"
     txn = {
@@ -1028,6 +1042,80 @@ async def admin_redemption_update(rid: str, body: RedemptionUpdateIn, admin: dic
     return (await _enrich_reds([out]))[0]
 
 
+# ---------------------------------------------------------------- settings: tarif & misi
+class RatesIn(BaseModel):
+    organik: int
+    anorganik: int
+    residu: int
+    ecobrick: int
+    clean_bonus_pct: int = DEFAULT_CLEAN_BONUS_PCT
+
+class MissionUpdateIn(BaseModel):
+    title: Optional[str] = None
+    desc: Optional[str] = None
+    points: Optional[int] = None
+
+@api.get("/admin/settings/rates")
+async def admin_get_rates(admin: dict = Depends(require_admin)):
+    st = await get_rate_settings()
+    missions = await db.missions.find({"kind": "daily"}, {"_id": 0}).sort("order", 1).to_list(100)
+    doc = await db.settings.find_one({"id": "rates"}) or {}
+    return {**st, "units": RATE_UNIT, "point_rupiah": POINT_RUPIAH, "missions": missions,
+            "updated_at": doc.get("updated_at"), "updated_by": doc.get("updated_by")}
+
+@api.put("/admin/settings/rates")
+async def admin_put_rates(body: RatesIn, admin: dict = Depends(require_admin)):
+    vals = body.model_dump()
+    if any(vals[k] < 0 for k in DEFAULT_RATES):
+        raise HTTPException(status_code=400, detail="Tarif tidak boleh minus")
+    if not 0 <= body.clean_bonus_pct <= 100:
+        raise HTTPException(status_code=400, detail="Bonus pilah bersih harus 0–100%")
+    await db.settings.update_one({"id": "rates"}, {"$set": {
+        "id": "rates", "rates": {k: vals[k] for k in DEFAULT_RATES},
+        "clean_bonus_pct": body.clean_bonus_pct, "updated_at": now_iso(), "updated_by": admin["name"]}}, upsert=True)
+    return await get_rate_settings()
+
+@api.put("/admin/missions/{mid}")
+async def admin_update_mission(mid: str, body: MissionUpdateIn, admin: dict = Depends(require_admin)):
+    m = await db.missions.find_one({"id": mid, "kind": "daily"})
+    if not m:
+        raise HTTPException(status_code=404, detail="Misi tidak ditemukan")
+    upd = {k: (v.strip() if isinstance(v, str) else v) for k, v in body.model_dump().items() if v is not None}
+    if "points" in upd and upd["points"] < 0:
+        raise HTTPException(status_code=400, detail="Nilai misi tidak boleh minus")
+    if "title" in upd and not upd["title"]:
+        raise HTTPException(status_code=400, detail="Nama misi wajib diisi")
+    if upd:
+        await db.missions.update_one({"id": mid}, {"$set": upd})
+    return await db.missions.find_one({"id": mid}, {"_id": 0})
+
+
+async def migrate_rupiah_v1():
+    """One-time switch to 1 poin = Rp1: new mission values, catalog prices, rates; reset warga balances to 0."""
+    if await db.settings.find_one({"id": "migration_rupiah_v1"}):
+        return
+    # mission values (pilah 500, siram 200, padatkan 100)
+    for title_kw, pts in [("Foto pilahan", 500), ("Siram", 200), ("ecobrick", 100)]:
+        await db.missions.update_many({"kind": "daily", "title": {"$regex": title_kw, "$options": "i"}},
+                                      {"$set": {"points": pts}})
+    # catalog prices in rupiah value
+    for name_kw, pts in [("Pulsa Rp10", 10000), ("Token listrik Rp20", 20000), ("Pupuk organik", 15000),
+                         ("Bibit sayur", 10000), ("Sabun", 12000), ("Donasi", 5000)]:
+        await db.catalog.update_many({"name": {"$regex": name_kw, "$options": "i"}}, {"$set": {"points": pts}})
+    await db.settings.update_one({"id": "rates"}, {"$setOnInsert": {
+        "id": "rates", "rates": DEFAULT_RATES, "clean_bonus_pct": DEFAULT_CLEAN_BONUS_PCT, "updated_at": now_iso(),
+        "updated_by": "Sistem"}}, upsert=True)
+    # reset balances (logged as adjustments so riwayat stays consistent)
+    async for u in db.users.find({"role": "warga", "points": {"$ne": 0}}):
+        await db.point_adjustments.insert_one({
+            "id": str(uuid.uuid4()), "user_id": u["id"], "user_name": u["name"], "delta": -u["points"],
+            "reason": "Reset saldo: sistem poin baru (1 poin = Rp1)", "admin_id": "system", "admin_name": "Sistem",
+            "balance_before": u["points"], "balance_after": 0, "created_at": now_iso()})
+        await db.users.update_one({"id": u["id"]}, {"$set": {"points": 0}})
+    await db.settings.insert_one({"id": "migration_rupiah_v1", "created_at": now_iso()})
+    logger.info("Migration rupiah_v1 applied")
+
+
 app.include_router(api)
 
 app.add_middleware(
@@ -1087,21 +1175,21 @@ async def seed():
             {"id": str(uuid.uuid4()), "kind": "stage", "order": 3, "title": "Ecobrick", "desc": "", "points": 0, "status": "locked"},
             {"id": str(uuid.uuid4()), "kind": "stage", "order": 4, "title": "Setor Rutin", "desc": "", "points": 0, "status": "locked"},
             # daily
-            {"id": str(uuid.uuid4()), "kind": "daily", "order": 10, "title": "Foto pilahan hari ini", "desc": "Unggah foto sampah yang sudah dipilah di rumah", "points": 10, "icon": "camera"},
-            {"id": str(uuid.uuid4()), "kind": "daily", "order": 11, "title": "Siram tanaman kompos", "desc": "Rawat tanaman dengan kompos sisa dapur", "points": 5, "icon": "sprout"},
-            {"id": str(uuid.uuid4()), "kind": "daily", "order": 12, "title": "Isi 1 ecobrick", "desc": "Padatkan plastik kering ke botol ecobrick", "points": 5, "icon": "bottle"},
+            {"id": str(uuid.uuid4()), "kind": "daily", "order": 10, "title": "Foto pilahan hari ini", "desc": "Unggah foto sampah yang sudah dipilah di rumah", "points": 500, "icon": "camera"},
+            {"id": str(uuid.uuid4()), "kind": "daily", "order": 11, "title": "Siram tanaman kompos", "desc": "Rawat tanaman dengan kompos sisa dapur", "points": 200, "icon": "sprout"},
+            {"id": str(uuid.uuid4()), "kind": "daily", "order": 12, "title": "Isi 1 ecobrick", "desc": "Padatkan plastik kering ke botol ecobrick", "points": 100, "icon": "bottle"},
         ]
         await db.missions.insert_many(missions)
 
     # catalog
     if await db.catalog.count_documents({}) == 0:
         await db.catalog.insert_many([
-            {"id": str(uuid.uuid4()), "name": "Pupuk organik 5 kg", "sub": "Hasil olahan sampah warga", "points": 300, "category": "Kebun", "how": "Ambil di Balai RW saat jadwal jemput", "stock": 40},
-            {"id": str(uuid.uuid4()), "name": "Bibit sayur paket", "sub": "5 jenis sayur dapur", "points": 180, "category": "Kebun", "how": "Ambil di Balai RW", "stock": 60},
-            {"id": str(uuid.uuid4()), "name": "Pulsa Rp10.000", "sub": "Semua operator", "points": 500, "category": "Pulsa", "how": "Dikirim ke nomor HP terdaftar", "stock": 99},
-            {"id": str(uuid.uuid4()), "name": "Token listrik Rp20.000", "sub": "PLN prabayar", "points": 900, "category": "Pulsa", "how": "Token dikirim via WhatsApp", "stock": 99},
-            {"id": str(uuid.uuid4()), "name": "Sabun cuci isi ulang", "sub": "Kebutuhan rumah tangga", "points": 220, "category": "Rumah Tangga", "how": "Ambil di Bank Sampah RW", "stock": 30},
-            {"id": str(uuid.uuid4()), "name": "Donasi kas RW", "sub": "Untuk kegiatan lingkungan", "points": 100, "category": "Donasi", "how": "Tercatat sebagai donasi atas namamu", "stock": 999},
+            {"id": str(uuid.uuid4()), "name": "Pupuk organik 5 kg", "sub": "Hasil olahan sampah warga", "points": 15000, "category": "Kebun", "how": "Ambil di Balai RW saat jadwal jemput", "stock": 40},
+            {"id": str(uuid.uuid4()), "name": "Bibit sayur paket", "sub": "5 jenis sayur dapur", "points": 10000, "category": "Kebun", "how": "Ambil di Balai RW", "stock": 60},
+            {"id": str(uuid.uuid4()), "name": "Pulsa Rp10.000", "sub": "Semua operator", "points": 10000, "category": "Pulsa", "how": "Dikirim ke nomor HP terdaftar", "stock": 99},
+            {"id": str(uuid.uuid4()), "name": "Token listrik Rp20.000", "sub": "PLN prabayar", "points": 20000, "category": "Pulsa", "how": "Token dikirim via WhatsApp", "stock": 99},
+            {"id": str(uuid.uuid4()), "name": "Sabun cuci isi ulang", "sub": "Kebutuhan rumah tangga", "points": 12000, "category": "Rumah Tangga", "how": "Ambil di Bank Sampah RW", "stock": 30},
+            {"id": str(uuid.uuid4()), "name": "Donasi kas RW", "sub": "Untuk kegiatan lingkungan", "points": 5000, "category": "Donasi", "how": "Tercatat sebagai donasi atas namamu", "stock": 999},
         ])
 
     # schedules for current + next week (Mon..Sun)
@@ -1162,6 +1250,7 @@ def _id_date(d: date):
 @app.on_event("startup")
 async def on_start():
     await seed()
+    await migrate_rupiah_v1()
 
 @app.on_event("shutdown")
 async def on_stop():

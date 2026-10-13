@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Leaf, Smartphone, Home, HeartHandshake, Package, MapPin } from "lucide-react";
 import api, { apiErr } from "@/lib/api";
+import { rp } from "@/components/ui-kit";
 import { Badge, Btn, Card, Confirm, Field, Modal, PageHeader, Toggle, inputCls, nf } from "./shared";
 
 const ICON = { Kebun: Leaf, Pulsa: Smartphone, "Rumah Tangga": Home, Donasi: HeartHandshake };
@@ -89,7 +90,7 @@ export default function Katalog() {
                 </div>
                 <div className="flex items-center justify-between border-t border-[#EEF0EA] pt-3 text-xs">
                   <div className="flex items-center gap-2">
-                    <Badge kind="ecobrick">{nf(it.points)} poin</Badge>
+                    <Badge kind="ecobrick">{nf(it.points)} poin · {rp(it.points)}</Badge>
                     <span className={`font-bold ${it.stock <= 5 ? "text-[#B42318]" : "text-[#4B5A52]"}`}>Stok {nf(it.stock)}</span>
                     <span className="text-[#4B5A52]">· {nf(it.redeemed)}× ditukar</span>
                   </div>
@@ -113,7 +114,7 @@ export default function Katalog() {
               <input data-testid="catalog-form-category" list="catalog-cats" className={inputCls} value={edit.category} onChange={set("category")} />
               <datalist id="catalog-cats">{["Kebun", "Pulsa", "Rumah Tangga", "Donasi"].map((c) => <option key={c} value={c} />)}</datalist>
             </Field>
-            <Field label="Harga (poin)"><input data-testid="catalog-form-points" type="number" min="1" className={inputCls} value={edit.points} onChange={set("points")} /></Field>
+            <Field label={`Harga (poin) · senilai ${rp(parseInt(edit.points, 10) || 0)}`}><input data-testid="catalog-form-points" type="number" min="1" className={inputCls} value={edit.points} onChange={set("points")} /></Field>
             <Field label="Stok"><input data-testid="catalog-form-stock" type="number" min="0" className={inputCls} value={edit.stock} onChange={set("stock")} /></Field>
             <Field label="Tampil ke warga"><div className="flex h-10 items-center"><Toggle testid="catalog-form-active" checked={edit.active} onChange={(v) => setEdit((x) => ({ ...x, active: v }))} /></div></Field>
             <div className="sm:col-span-2"><Field label="Cara pengambilan"><input data-testid="catalog-form-how" className={inputCls} placeholder="mis. Ambil di Balai RW" value={edit.how} onChange={set("how")} /></Field></div>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, HardHat, Gift, CalendarDays, Scale, Ticket, LogOut, Menu } from "lucide-react";
+import { LayoutDashboard, Users, HardHat, Gift, CalendarDays, Scale, Ticket, LogOut, Menu, BadgePercent } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { AntikMark } from "@/components/ui-kit";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -13,6 +13,7 @@ const NAV = [
   { to: "/admin/jadwal", label: "Jadwal Jemput", icon: CalendarDays, id: "jadwal" },
   { to: "/admin/setoran", label: "Laporan Setoran", icon: Scale, id: "setoran" },
   { to: "/admin/penukaran", label: "Penukaran Poin", icon: Ticket, id: "penukaran" },
+  { to: "/admin/tarif", label: "Pengaturan Tarif", icon: BadgePercent, id: "tarif" },
 ];
 
 function SideNav({ onNavigate }) {

@@ -1,3 +1,7 @@
+// 1 poin = Rp1 — helper to show the rupiah equivalent of points
+export const POINT_RUPIAH = 1;
+export const rp = (points) => "Rp" + new Intl.NumberFormat("id-ID").format(Math.round((points || 0) * POINT_RUPIAH));
+
 export const C = {
   bg: "#F3F5EF",
   ink: "#17251E",

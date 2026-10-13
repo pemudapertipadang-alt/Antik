@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import api, { apiErr } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { C, PhoneShell } from "@/components/ui-kit";
+import { C, PhoneShell, rp } from "@/components/ui-kit";
 import BottomNav from "@/components/BottomNav";
 import { toast } from "sonner";
 
@@ -17,7 +17,7 @@ export default function Misi() {
     if (m.done) return;
     try {
       await api.post("/warga/missions/complete", { mission_id: m.id });
-      toast.success(`+${m.points} poin · ${m.title}`);
+      toast.success(`+${m.points} poin (senilai ${rp(m.points)}) · ${m.title}`);
       await load();
       refreshUser();
     } catch (e) { toast.error(apiErr(e)); }
@@ -91,7 +91,7 @@ export default function Misi() {
         <section style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Misi hari ini</h2>
-            <span style={{ fontSize: 13, fontWeight: 700, color: C.amber }}>{d?.earned ?? 0} / {d?.daily_total ?? 0} poin</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: C.amber }}>{d?.earned ?? 0} / {d?.daily_total ?? 0} poin · {rp(d?.daily_total ?? 0)}</span>
           </div>
           {(d?.daily || []).map((m) => (
             <div key={m.id} style={{ background: "#fff", border: `1px solid ${C.line}`, borderRadius: 18, padding: 12,
@@ -104,6 +104,7 @@ export default function Misi() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 700, fontSize: 14, lineHeight: 1.35 }}>{m.title}</div>
                 <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.4 }}>{m.desc}</div>
+                <div data-testid={`mission-rupiah-${m.id}`} style={{ fontSize: 12, fontWeight: 700, color: C.green, marginTop: 2 }}>{m.points} poin · senilai {rp(m.points)}</div>
               </div>
               <button data-testid={`mission-complete-${m.id}`} onClick={() => complete(m)} disabled={m.done}
                 style={{ height: 44, padding: "0 12px", borderRadius: 12, border: "none",

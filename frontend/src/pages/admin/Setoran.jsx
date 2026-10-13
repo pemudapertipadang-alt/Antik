@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Leaf, Package, Recycle, Coins } from "lucide-react";
 import api, { apiErr } from "@/lib/api";
+import { rp } from "@/components/ui-kit";
 import { ExportBtn, Field, PageHeader, Pager, SearchInput, Select, StatCard, Table, downloadCsv, fmtDate, inputCls, kg, nf, todayISO, useDebounced } from "./shared";
 
 const LIMIT = 20;
@@ -52,7 +53,7 @@ export default function Setoran() {
         <StatCard testid="setoran-total-organik" label="Organik" value={kg(t.organik)} icon={Leaf} />
         <StatCard testid="setoran-total-anorganik" label="Anorganik" value={kg(t.anorganik)} icon={Package} tone="blue" sub={`Residu ${kg(t.residu)}`} />
         <StatCard testid="setoran-total-ecobrick" label="Ecobrick" value={`${nf(t.ecobrick)} botol`} icon={Recycle} tone="amber" />
-        <StatCard testid="setoran-total-poin" label="Poin diberikan" value={nf(t.points)} icon={Coins} tone="dark" sub={`${nf(data.total)} setoran`} />
+        <StatCard testid="setoran-total-poin" label="Poin diberikan" value={nf(t.points)} icon={Coins} tone="dark" sub={`senilai ${rp(t.points)} · ${nf(data.total)} setoran`} />
       </div>
 
       <Table loading={loading} empty={data.items.length === 0 ? "Tidak ada setoran di rentang ini." : null}

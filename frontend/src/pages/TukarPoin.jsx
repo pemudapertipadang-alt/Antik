@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Leaf, Smartphone, Home, Heart, Check } from "lucide-react";
 import api, { apiErr } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { C, PhoneShell } from "@/components/ui-kit";
+import { C, PhoneShell, rp } from "@/components/ui-kit";
 import BottomNav from "@/components/BottomNav";
 import { toast } from "sonner";
 
@@ -51,6 +51,7 @@ export default function TukarPoin() {
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
           <span style={{ fontSize: 12, color: C.muted, fontWeight: 600 }}>Saldo</span>
           <span data-testid="tukar-saldo" style={{ fontWeight: 800, fontSize: 18, color: C.amber }}>{nf(points)} poin</span>
+          <span data-testid="tukar-saldo-rupiah" style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>senilai {rp(points)}</span>
         </div>
       </header>
 
@@ -95,7 +96,10 @@ export default function TukarPoin() {
                   <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.4 }}>{it.sub}</div>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
-                  <span style={{ fontWeight: 800, fontSize: 14, color: C.amber }}>{nf(it.points)}</span>
+                  <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
+                    <span style={{ fontWeight: 800, fontSize: 14, color: C.amber }}>{nf(it.points)} poin</span>
+                    <span style={{ fontSize: 11, color: C.muted, fontWeight: 600 }}>senilai {rp(it.points)}</span>
+                  </span>
                   <button data-testid={`redeem-${it.id}`} disabled={!afford}
                     onClick={() => { setPick(it); setConfirmed(false); }}
                     style={{ height: 40, minWidth: 44, padding: "0 12px", borderRadius: 12,
@@ -118,7 +122,7 @@ export default function TukarPoin() {
               <div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: "uppercase", letterSpacing: "0.6px" }}>Konfirmasi penukaran</div>
                 <div style={{ fontWeight: 800, fontSize: 18 }}>{pick.name}</div>
-                <div style={{ fontSize: 13, color: C.muted }}>{nf(pick.points)} poin · sisa saldo {nf(points - pick.points)} poin · {pick.how}</div>
+                <div style={{ fontSize: 13, color: C.muted }}>{nf(pick.points)} poin (senilai {rp(pick.points)}) · sisa saldo {nf(points - pick.points)} poin · {pick.how}</div>
               </div>
               <div style={{ display: "flex", gap: 10 }}>
                 <button data-testid="redeem-cancel" onClick={close} style={{ flex: 1, height: 50, borderRadius: 14,

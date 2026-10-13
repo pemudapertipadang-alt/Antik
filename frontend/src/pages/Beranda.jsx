@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Bell, Truck, ChevronRight, Camera, FileText, Sprout, BookOpen } from "lucide-react";
 import api from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { C, PhoneShell } from "@/components/ui-kit";
+import { C, PhoneShell, rp } from "@/components/ui-kit";
 import BottomNav from "@/components/BottomNav";
 
 const nf = (n) => new Intl.NumberFormat("id-ID").format(n);
@@ -53,6 +53,8 @@ export default function Beranda() {
               <div className="font-display" data-testid="point-balance" style={{ fontWeight: 800, fontSize: 46, lineHeight: 1.05, letterSpacing: "-1px" }}>
                 {d ? nf(d.points) : "—"}
               </div>
+              {d && <div data-testid="point-balance-rupiah" style={{ fontSize: 13, color: "#CFE3D6", fontWeight: 600, marginTop: 4 }}>
+                poin · senilai <b style={{ color: "#fff" }}>{rp(d.points)}</b></div>}
             </div>
             {d && <div style={{ fontSize: 12, fontWeight: 700, background: C.green2, padding: "6px 10px", borderRadius: 999 }}>
               +{nf(d.week_points)} minggu ini</div>}

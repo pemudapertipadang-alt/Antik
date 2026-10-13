@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { rp } from "@/components/ui-kit";
 import { Eye, KeyRound, Plus, Minus } from "lucide-react";
 import api, { apiErr } from "@/lib/api";
 import {
@@ -62,7 +63,8 @@ export default function Warga() {
               <div className="text-sm">RT {u.rt} / RW {u.rw}</div>
               <div className="max-w-[220px] truncate text-xs text-[#4B5A52]">{[u.kelurahan, u.kecamatan].filter(Boolean).join(", ")}</div>
             </td>
-            <td className="px-4 py-3 text-right font-extrabold text-[#9A4A0B]">{nf(u.points)}</td>
+            <td className="px-4 py-3 text-right"><div className="font-extrabold text-[#9A4A0B]">{nf(u.points)}</div>
+              <div className="text-[11px] text-[#4B5A52]">{rp(u.points)}</div></td>
             <td className="px-4 py-3 text-right">
               <div className="font-bold">{nf(u.setoran_count)}</div>
               <div className="text-[11px] text-[#4B5A52]">{u.last_setoran ? fmtDate(u.last_setoran) : "—"}</div>
@@ -159,7 +161,8 @@ function WargaDetail({ id, onClose, onChanged }) {
         <div className="flex flex-col gap-5">
           <div className="grid grid-cols-3 gap-3">
             <Card className="p-3"><div className="text-[11px] font-bold uppercase text-[#4B5A52]">Saldo poin</div>
-              <div data-testid="warga-detail-points" className="font-display text-2xl font-extrabold text-[#9A4A0B]">{nf(u.points)}</div></Card>
+              <div data-testid="warga-detail-points" className="font-display text-2xl font-extrabold text-[#9A4A0B]">{nf(u.points)}</div>
+              <div className="text-[11px] font-semibold text-[#4B5A52]">senilai {rp(u.points)}</div></Card>
             <Card className="p-3"><div className="text-[11px] font-bold uppercase text-[#4B5A52]">Setoran</div>
               <div className="font-display text-2xl font-extrabold">{nf(d.setoran.length)}</div></Card>
             <Card className="flex flex-col justify-between gap-1 p-3">

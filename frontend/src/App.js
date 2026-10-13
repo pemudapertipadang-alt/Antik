@@ -16,6 +16,7 @@ import Katalog from "@/pages/admin/Katalog";
 import Jadwal from "@/pages/admin/Jadwal";
 import Setoran from "@/pages/admin/Setoran";
 import Penukaran from "@/pages/admin/Penukaran";
+import Tarif from "@/pages/admin/Tarif";
 
 const homeFor = (role) => (role === "admin" ? "/admin" : role === "petugas" ? "/petugas" : "/beranda");
 
@@ -70,6 +71,7 @@ function App() {
             <Route path="jadwal" element={<Jadwal />} />
             <Route path="setoran" element={<Setoran />} />
             <Route path="penukaran" element={<Penukaran />} />
+            <Route path="tarif" element={<Tarif />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

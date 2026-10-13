@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, QrCode } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import api, { apiErr } from "@/lib/api";
-import { C, PhoneShell } from "@/components/ui-kit";
+import { C, PhoneShell, rp } from "@/components/ui-kit";
 import BottomNav from "@/components/BottomNav";
 import { toast } from "sonner";
 
@@ -144,7 +144,8 @@ export default function Jemput() {
                 </div>
               </div>
               <div style={{ fontWeight: 800, fontSize: 15, color: h.points >= 0 ? C.green : C.amber }}>
-                {h.points >= 0 ? "+" : ""}{h.points}</div>
+                {h.points >= 0 ? "+" : ""}{new Intl.NumberFormat("id-ID").format(h.points)}
+                <div style={{ fontSize: 11, fontWeight: 600, color: C.muted, textAlign: "right" }}>{rp(Math.abs(h.points))}</div></div>
             </div>
           ))}
         </section>
