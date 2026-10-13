@@ -68,17 +68,23 @@ class TestAuth:
 
     def test_register_and_login(self):
         phone = f"0812{uuid.uuid4().int % 10**8:08d}"
-        r = requests.post(f"{API}/auth/register", json={"name": "TEST_User", "phone": phone, "pin": "9876", "rt": "03", "rw": "05"})
+        reg_body = {"name": "TEST_User", "phone": phone, "pin": "9876",
+                    "kabupaten": "Kab. Agam", "kecamatan": "Ampek Angkek",
+                    "kelurahan": "Batu Taba", "rt": "03", "rw": "05"}
+        r = requests.post(f"{API}/auth/register", json=reg_body)
         assert r.status_code == 200, r.text
         d = r.json()
         assert d["user"]["role"] == "warga"
         assert d["user"]["points"] == 0
         # duplicate
-        r2 = requests.post(f"{API}/auth/register", json={"name": "TEST_User", "phone": phone, "pin": "9876"})
+        r2 = requests.post(f"{API}/auth/register", json=reg_body)
         assert r2.status_code == 400
 
     def test_register_short_pin(self):
-        r = requests.post(f"{API}/auth/register", json={"name": "x", "phone": f"0899{uuid.uuid4().int % 10**8:08d}", "pin": "12"})
+        r = requests.post(f"{API}/auth/register", json={
+            "name": "x", "phone": f"0899{uuid.uuid4().int % 10**8:08d}", "pin": "12",
+            "kabupaten": "Kab. Agam", "kecamatan": "Ampek Angkek",
+            "kelurahan": "Batu Taba", "rt": "01", "rw": "01"})
         assert r.status_code == 400
 
 
@@ -139,7 +145,11 @@ class TestWarga:
     def test_redeem_insufficient(self, warga_token):
         # Register a brand new warga with 0 points
         phone = f"0812{uuid.uuid4().int % 10**8:08d}"
-        reg = requests.post(f"{API}/auth/register", json={"name": "TEST_poor", "phone": phone, "pin": "4321"})
+        reg = requests.post(f"{API}/auth/register", json={
+            "name": "TEST_poor", "phone": phone, "pin": "4321",
+            "kabupaten": "Kab. Agam", "kecamatan": "Ampek Angkek",
+            "kelurahan": "Batu Taba", "rt": "01", "rw": "02"})
+        assert reg.status_code == 200, reg.text
         tok = reg.json()["token"]
         cat = requests.get(f"{API}/warga/catalog", headers=wh(tok)).json()
         expensive = max(cat["items"], key=lambda i: i["points"])
@@ -182,22 +192,27 @@ class TestPetugas:
         r = requests.get(f"{API}/petugas/rates", headers=wh(petugas_token))
         assert r.status_code == 200
         d = r.json()
-        assert d["rates"]["organik"] == 10 and d["rates"]["anorganik"] == 15 and d["rates"]["ecobrick"] == 20
+        assert d["rates"]["organik"] == 500
+        assert d["rates"]["anorganik"] == 1500
+        assert d["rates"]["ecobrick"] == 1000
+        assert d["rates"]["residu"] == 0
+        assert d["clean_bonus_pct"] == 10
+        assert d["point_rupiah"] == 1
 
     def test_weigh_and_bonus(self, petugas_token):
         before = requests.get(f"{API}/petugas/warga/{MEMBER_CODE}", headers=wh(petugas_token)).json()["points"]
         body = {"member_code": MEMBER_CODE, "clean_bonus": True,
                 "items": [{"type": "organik", "value": 2.0, "unit": "kg"},
                           {"type": "anorganik", "value": 1.0, "unit": "kg"},
-                          {"type": "ecobrick", "value": 2, "unit": "botol"}]}
-        # expected: 20 + 15 + 40 = 75, bonus 10% = 8 (round), total 83
+                          {"type": "ecobrick", "value": 1, "unit": "botol"}]}
+        # expected: 1000 + 1500 + 1000 = 3500, bonus 10% = 350, total 3850
         r = requests.post(f"{API}/petugas/weigh", json=body, headers=wh(petugas_token))
         assert r.status_code == 200, r.text
         d = r.json()
-        assert d["total_points"] == 83
-        assert d["bonus_points"] == 8
+        assert d["total_points"] == 3850
+        assert d["bonus_points"] == 350
         after = requests.get(f"{API}/petugas/warga/{MEMBER_CODE}", headers=wh(petugas_token)).json()["points"]
-        assert after == before + 83
+        assert after == before + 3850
 
     def test_today(self, petugas_token):
         r = requests.get(f"{API}/petugas/today", headers=wh(petugas_token))

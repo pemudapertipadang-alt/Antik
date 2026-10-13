@@ -37,6 +37,13 @@
 - Warga redeem now creates "menunggu" + decrements stock; history shows status/refund/adjustments. Deactivated accounts blocked from login & weighing.
 - Verified: 36/36 admin pytest + frontend E2E (iteration_3).
 
+## Implemented (2026-10-13) — Poin berbasis Rupiah
+- 1 poin = Rp1. Misi: Foto pilahan 500, Siram 200, Isi ecobrick 100. Setoran: Organik 500/kg, Anorganik 1.500/kg, Ecobrick 1.000/botol, Residu 0, bonus bersih 10%.
+- Hadiah: Donasi 5.000, Bibit 10.000, Pulsa 10rb 10.000, Sabun 12.000, Pupuk 5kg 15.000, Token 20rb 20.000.
+- One-time migration migrate_rupiah_v1 reset all warga balances to 0 (logged as point_adjustments).
+- Rates in `settings` collection (id "rates"); admin page /admin/tarif edits rates, bonus %, mission title/desc/points.
+- Warga/petugas/admin UI show "X poin · senilai RpX". Verified iteration_5.
+
 ## Backlog
 - P1: Real pulsa/payment integration for redemption (Stripe/Midtrans/pulsa provider) — pending user details.
 - P1: Siaran WA & batch pupuk/pengiriman modules in admin.
